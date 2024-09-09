@@ -1,4 +1,3 @@
-> 本文由 [简悦 SimpRead](http://ksria.com/simpread/) 转码， 原文地址 [www.qinless.com](https://www.qinless.com/1708)
 
 > 仅供学习研究 。
 
@@ -7,17 +6,8 @@
 
 本文主要使用 `ida + unidbg` 动静态分析
 
-样本 `unidbg` 参考文章
-
-*   [某宝系 tb tm sgmain x-sign 分析 - unidbg](https://www.qinless.com/179)
 
 该算法有白盒 `aes`，会使用 `dfa` 攻击获取密钥
-
-参考文章
-
-*   [第一讲——从黑盒攻击模型到白盒攻击模型](https://www.qinless.com/1642)
-    
-*   [密码学学习记录｜aes dfa 练习样本一](https://www.qinless.com/1698)
     
 
 **_Tips: 博主也是 dfa 的初学者，文中有描述错误的情况，还望各位大佬轻喷_**
