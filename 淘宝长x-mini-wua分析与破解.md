@@ -4,15 +4,24 @@
 
 ## 前言
 
-淘宝的x-mini-wua中带着硬件参数 如果是新设备 则可以不带账号获取一些淘宝商品的数据 如果能生成海量的wua那岂不是可以无限不带账号拿数据？
+淘宝的x-mini-wua中带着硬件参数 
+
+如果是新设备 则可以不带账号获取一些淘宝商品的数据 
+
+如果能生成海量的wua那岂不是可以无限不带账号拿数据？
+
 好了开始分析 样本21年的某宝
+
 本文并不会贴出对应的算法 只会一带而过 重点是mini-wua生成的流程
+
 以下代码快内容都人工加了**和谐**二字
 
 ## SG_INNER_DATA 分析
 
 真机关闭网络后只会生成短wua和短umt 那么说明肯定是走了网络请求
+
 发现某宝会读取本地 data\user\0\com.taobao.taobao\app_SGLib\SG_INNER_DATA
+
 文件里面存放这AES加密后的数据 通用固定key 16位
 
 ```json
@@ -36,18 +45,24 @@ stid45-0解密后:JUGAjpFLPIas和谐KDFb64OmfA6hVyh+o1
 sdfsd-0解密后:M1gAV4yYmWsMjJC3QiFOrilMVDvc0和谐2sTzPRbgMq99E0XYF6W2eq9G0ads0和谐r42h3HyQ0pzCQ/EbdxChpSb2q3和谐Bi9ut8TDSq7fV/txQdBUQ==
 ```
 
-stid45-0=umt **sdfsd-0=长wua** 至于其他几个json key的解密就不贴了
-
+stid45-0=umt **sdfsd-0=长wua** 
+至于其他几个json key的解密就不贴了
  
 
 app刚打开的时候只会有rt_undef_key0 发完硬件信息请求拿到M1g 
+
 才会加密写入SG_INNER_DATA内 
+
 本地的算法只能生成短wua 
+
 必须读取到sdfsd=eeid才会生成长wua
 
 ## 协议（部分）
 
-好几条请求 基本都是上报硬件信息及手机环境等 权限给的越多 上报的硬件信息则会增加
+好几条请求 
+基本都是上报硬件信息及手机环境等 
+权限给的越多 
+上报的硬件信息则会增加
 
 ```java
 jsonObject.put("403e",setSV("5e07","sirius")); //设备
@@ -107,8 +122,11 @@ jsonObject.put("3b0a",setSV("5e07","V9.8.22.0.OEBCNFA"));//incremental
 
 
 完整json分三个部分ct内容包含了以上硬件信息相关 
+
 我们只要对整个json数据逐一分析 
+
 用随机的硬件信息或真机库数据进行动态修改并发送请求 
+
 即可获取大量eeid **短wua算法+eeid=长wua**
 
 ## 发送请求
