@@ -1,0 +1,281 @@
+libsgmainso-6.4.176分析：
+
+libsgmain.so是一个apk，其中com.alibaba.wireless.security.mainplugin.SecurityGuardMainPlugin
+类中加载真正的libsgmainso-6.4.176.so
+
+
+# libsgmain.so 被做了处理， section表失效
+1、尝试修复，通过dynamic段信息进行section节修复，我修复了一个版本，不过有两三个节存在问题，特别是data，不过ida能加载。
+2、可以通过010 editor把section 节个数设为0，这样ida可以通过段加载。
+修复后可以静态先看看，我们可以发现此版本较libsgmainso-6.3.80版本变化挺大，libsgmainso-6.3.80版本里面的大量的跳转逻辑
+不见了，可能是性能考虑吧， 觉得之前的版本比较恶心。
+
+
+# 有几种比较好的办法尝试逆向
+1、尝试手动加载so，先逆向跑跑看
+2、找一个集成该sdk的app，进行调试，注意最好这个app本身没什么防护，否则你要花特别多的时间在对抗app上。
+3、同2，可以通过frida hook art::JNI::RegisterNatives(_JNIEnv *, _jclass *, JNINativeMethod const*, int) 把注册的
+doCommandNative对应的地址打印出来，然后通过加载地址和base计算得到文件偏移，静态看一看；libsgmainso-6.3.80版本
+对应文件偏移的指令没法看，应该做了处理。
+
+# 加载段地址， 后面可能对不上，忘记这是第几次调试拷贝下来的了
+libsgmainso_6.4.176.so B3B25000 B3BD5000 R . X D . byte 00 public CODE 32 00 00
+libsgmainso_6.4.176.so B3BD5000 B3BD8000 R . . . . byte 00 public CONST 32 00 00
+libsgmainso_6.4.176.so B3BD8000 B3BF3000 R W . . . byte 00 public DATA 32 00 00
+
+# 分析：
+# init_array 没有逻辑
+我手机linker调用init_array 导出函数 __dl__ZN6soinfo9CallArrayEPKcPPFvvEjb B6F97AC8
+但该so没有init_array为空
+
+
+# call jni_onload
+## 首先初始化了 三个全局jobject (Boolean, Integer, String)
+
+首先肯定用了llvm混淆指令平坦化
+
+sub_8D194被我改名为createGlobalBoolean_Integer_String
+详细见createGlobalBoolean_Integer_String.c
+r0 = javavm
+r1 = [stack]:BEBED5E8 DCD 0
+r2 = 0x10004
+r3 =  art::CheckJII::GetEnv(_JavaVM *, void **, int)
+调用GetEnv获取env
+	static jint GetEnv(JavaVM* vm, void** env, jint version) {
+	ScopedCheck sc(vm, true, __FUNCTION__);
+	sc.Check(true, "vpI", vm);
+	return CHECK_JNI_EXIT("I", BaseVm(vm)->GetEnv(vm, env, version));
+	}
+	
+调用FindClass(env, "java/lang/Boolean")
+调用NewGlobalRef(env, BooleanObj)并保存它
+调用FindClass(env, "java/lang/Integer")
+调用NewGlobalRef(env, Integer)并保存它
+调用FindClass(env, "java/lang/String")
+调用NewGlobalRef(env, String)并保存它
+
+# 拉了一块，后面在补
+libart.so:B4DD560E BLX             R7 ; // 对应文件偏移1e660e
+//TODO 落下一点东西，操作一个栈变量，没细看
+
+[stack]:BEC335E0 DCD 0xA3FADAB9
+[stack]:BEC335E4 DCD 0x53
+[stack]:BEC335E8 DCD 0x22
+[stack]:BEC335EC DCD 0x9FEE1FCD
+[stack]:BEC335F0 DCD 1
+[stack]:BEC335F4 DCD 0xB4F7D200
+[stack]:BEC335F8 DCD 0xA3FD44EF
+[stack]:BEC335FC DCD 0xE8
+[stack]:BEC33600 DCD 0xD3
+[stack]:BEC33604 DCD 0x43
+[stack]:BEC33608 DCD 0xB4F53DC0
+[stack]:BEC3360C DCD 0
+[stack]:BEC33610 DCD 0xBEC33650
+[stack]:BEC33614 DCD 0xA3F373A7
+[stack]:BEC33618 DCD 0
+[stack]:BEC3361C DCD 0
+[stack]:BEC33620 DCD 0
+[stack]:BEC33624 DCD 0x9D
+[stack]:BEC33628 DCD 0x16
+[stack]:BEC3362C DCD 0x9FEE1FCD
+[stack]:BEC33630 DCD 0xB4F07800
+[stack]:BEC33634 DCD 0xB4F07800
+[stack]:BEC33638 DCD 0xBEC33870
+[stack]:BEC3363C DCD 0xBEC33860
+[stack]:BEC33640 DCD 0xB4EFCA64
+[stack]:BEC33644 DCD 0x43
+[stack]:BEC33648 DCD 0xB4EFDAE0
+[stack]:BEC3364C DCD 0
+[stack]:BEC33650 DCD 0xBEC336A0
+[stack]:BEC33654 DCD 0xB126976F
+[stack]:BEC33658 DCD 0xAFE00284
+[stack]:BEC3365C DCD 0xA3F372E9
+[stack]:BEC33660 DCD 0x27
+[stack]:BEC33664 DCD 0xB126A711
+[stack]:BEC33668 DCB 0xD3 ; 
+[stack]:BEC33669 DCB 0xA6 ; 
+[stack]:BEC3366A DCB 0x26 ; &
+[stack]:BEC3366B DCB 0xB1 ; 
+
+libsgmainso_6.4.176.so:A3FAD9C4 BLX             R2 = FindClass
+com/taobao/wireless/security/adapter/common/HttpUtil
+这里就出现了一个问题， 因为我前n次都是通过手动加载该so进行调试的，我代码中没有加载任何sgmain的类，
+所以后续逻辑会出现问题，但还好没马上停止逻辑，我先手动设置该变量不为空，先调试着）
+调用art::CheckJNI::NewGlobalRef(_JNIEnv *, _jobject *)创建HttpUtil的NewGlobalRef
+后续逻辑就没了，因为vm中没有该class
+// TODO 后续用真实的app加载，在补上
+
+
+# 进入解密
+.text:000849B6                 BL              sub_8586C ; r0 =  0x84ab8
+.text:000849B6                                         ; r1 = 见下面，好像这个函数没有参数
+.text:000849B6                                         ; r2 = 0x35
+.text:000849B6                                         ; r3 = 0x53
+
+
+libsgmainso_6.4.176.so:B3BB15D0 （我给重命名为create_vdata(int len)）
+.text:000858BE                 BL              sub_8C5D0 ; r0 = 0x11
+.text:000858BE                                         ; r1
+.text:000858BE                                         ; r2 = 0x858b9
+.text:000858BE                                         ; r3 = 0x5a
+
+debug014:ACC1CFC8 DCB    0                                ; mallocA
+ma = malloc(0x38); // 56个字节大小的内存
+memset((char*) (ma + 4), 0, 0x34);
+debug120:A40082F8 DCB 0x6C ; l                            ; mallocb
+mb = malloc(0x11); // 传入大小
+memset(mb, 0, 0x11);
+ma = 0xA40082F8 = mb;
+ma + 0x4 = 0;
+ma + 0x8 = 0x11; // 即mb大小
+ma + 0xc = 0x8c34d; (一个函数起始地址)
+ma + 0x10 = 0x8c4d2;(一个函数起始地址)
+ma + 0x14 = 0x8c392;(一个函数起始地址)
+ma + 0x18 = 0x8c3f4;(一个函数起始地址)
+ma + 0x1c = 0x8c412(一个函数起始地址)
+ma + 0x20 = 0x8c44a 
+ma + 0x24 = 0x8c468
+ma + 0x28 = 0x8c4ac 
+ma + 0x2c = 0x8c500
+ma + 0x30 = 0x8c512
+ma + 0x34 = 0x8c528
+对应结构体如下：
+struct data {
+	char* d;
+};
+
+struct vdata{
+	struct data* data;
+	int data_len;
+	int data_mlen; // = len + 1
+	void* f1;
+	void* f2;
+	void* f3;
+	void* f4;
+	void* f5;
+	void* f6;
+	void* f7;
+	void* f8;
+	void* f9;
+	void* f10;
+	void* f11;
+};
+
+跳转到跳转到0x858c2处继续执行
+///////////////////////////////////////////////////////////////////////////////////////
+后继续执行libsgmainso_6.4.176.so:B3BB15D0 create_vdata（我给重命名为create_vdata，见逆向代码create_vdata）
+debug024:AD3A1858 DCB    0                                ; mmaloca
+mma 
+debug024:AD3A1970 DCB    0                                ; mmallocb
+mmb 
+////////////////////////////////////////////////////////////////////////////////////////
+libsgmainso_6.4.176.so:B3BAA91C BLX             R3
+r0 = ma = debug014:ACC1CFC8 DCD 0xA40082F8                          ; mallocA
+r1 = libsgmainso_6.4.176.so:B3BAAA48 aDcoLckHM3cQ DCB "DcO/lcK+h?m3c*q@",0
+r2 = 0x10
+blx rx  = libsgmainso_6.4.176.so:B3BB134C sub_B3BB134C 被我重命名为 make_data 
+详细见make_data.c
+第一次执行
+va = ma + 4 = 0;
+vb = ma + 8 = 0x11
+memcpy(mb, r1, 0x10); mb = "DcO/lcK+h?m3c*q@" // 分析是rc4的初始key
+ma + 4 = 0x10
+
+对应调试内存
+debug014:ACC1CFC8 DCD 0xA40082F8                          ; mallocA
+debug014:ACC1CFCC DCD 0x10
+debug014:ACC1CFD0 DCD 0x11
+debug014:ACC1CFD4 DCD 0xB3BB134D
+debug014:ACC1CFD8 DCD 0xB3BB14D3
+debug014:ACC1CFDC DCD 0xB3BB1393
+debug014:ACC1CFE0 DCD 0xB3BB13F5
+debug014:ACC1CFE4 DCD 0xB3BB1413
+debug014:ACC1CFE8 DCD 0xB3BB144B
+debug014:ACC1CFEC DCD 0xB3BB1469
+debug014:ACC1CFF0 DCD 0xB3BB14AD
+debug014:ACC1CFF4 DCD 0xB3BB1501
+debug014:ACC1CFF8 DCD 0xB3BB1513
+debug014:ACC1CFFC DCD 0xB3BB1529
+//////////////////////////////////////////////////////////////////////////////////////
+libsgmainso_6.4.176.so:B3BAA968 MOV             R4, R1走到这里对应文件0x85968
+对栈[stack]:BEC335A8 DCD memset,长度232个字节，memset(BEC335A8, 0x35, 0xe8)
+对栈[stack]:BEC335A8 DCD memset,长度21个字节，memset(BEC335A8, 0, 0x15)
+
+继续执行libsgmainso_6.4.176.so:B3BAA98A BLX      R3，实际是跳转到make_data
+r0 = mma = debug024:AD3A1858 DCB 0x70 ; mmaloca   
+===========================================================================
+.text:00084AB9                 DCD 0x3D21A7F9
+.text:00084ABD                 DCD 0x77FE3E8C
+.text:00084AC1                 DCD 0x2ADB4018
+.text:00084AC5                 DCD 0xF9C54AAD
+.text:00084AC9                 DCD 0x547556A1
+.text:00084ACD                 DCD 0xA6C7BE23
+.text:00084AD1                 DCD 0x8EEC357A
+.text:00084AD5                 DCD 0x117405B2
+.text:00084AD9                 DCD 0x6E7F5893
+.text:00084ADD                 DCD 0x9D4FE33A
+.text:00084AE1                 DCD 0x6B7E0354
+.text:00084AE5                 DCD 0xE35B1BFA
+.text:00084AE9                 DCD 0xF902C1F8
+==========================================================================
+r1 = libsgmainso_6.4.176.so:B3BA9AB9 loc_B3BA9AB8  ，对应文件偏移0x84AB9
+r2 = 0x34,52个字节
+
+va = ma + 4 = 0;
+vb = ma + 8 = 0x35
+memcpy(mb, r1, 0x10); mmb = B3BA9AB9
+ma + 4 = 0x34
+
+对应测试内存
+debug024:AD3A1858 DCD 0xAD3A1970                          ; mmaloca
+debug024:AD3A185C DCD 0x34
+debug024:AD3A1860 DCD 0x35
+debug024:AD3A1864 DCD 0xB3BB134D
+debug024:AD3A1868 DCD 0xB3BB14D3
+debug024:AD3A186C DCD 0xB3BB1393
+debug024:AD3A1870 DCD 0xB3BB13F5
+debug024:AD3A1874 DCD 0xB3BB1413
+debug024:AD3A1878 DCD 0xB3BB144B
+debug024:AD3A187C DCD 0xB3BB1469
+debug024:AD3A1880 DCD 0xB3BB14AD
+debug024:AD3A1884 DCD 0xB3BB1501
+debug024:AD3A1888 DCD 0xB3BB1513
+debug024:AD3A188C DCD 0xB3BB1529
+
+继续进入.text:00074FEC sub_74FEC  
+libsgmainso_6.4.176.so:B3BAA9A4 BL    sub_B3B99FEC， 被我重命名为decrypto
+详细见decrypto.c
+传递两个参数（一个代表待解密结构体，一个代表返回码），应该是解密算法，内置n种解密算法如rc4、解压缩等
+r0 = BEC33560
+r1 = BEC3357C
+
+先进入case 3:
+	被我重命名为call_rc4，详细见逆向的代码；
+	里面实际上就是调用了rc4算法解密，上面的mma数据(mma未被解密，而是重新拷贝一个结构体用于解密)
+	r0 = ma = ACC1CFC8, r1 = mma = AD3A1858
+	
+	首先创建vdatac拷贝mma数据内容
+	debug120:A41BB158 DCB 0x20                                ; vdatac
+	debug120:A41BB120 DCB    0                                ; decryptedata
+	[stack]:BEC333F8 DCB    0                                ; swapkey
+	char buf[264];
+	memset(buf, 0, 264); // 实际只用256，算法里面是buf+8开始的
+	init_rc4key(swapkey, vdata->data, vata->data_len);
+	rc4_(swapkey, cryptedata->data_len, cryptedata->data, decrypted_data->data);
+解密后字符串
+com/taobao/wireless/security/adapter/umid/UmidAdapter
+
+继续执行到
+libsgmainso_6.4.176.so:A40AA9D0 BX              R10 = A40AA9E9
+执行memcpy把解密字符串拷贝到栈上
+libsgmainso_6.4.176.so:A40AA9FC LDR             R0, [SP,#8]
+libsgmainso_6.4.176.so:A40AA9FE BLX             memcpy
+[stack]:BEC335A8 DCB    0
+
+执行free把之前解密的数据释放掉
+libsgmainso_6.4.176.so:A40AAA06 BL              free__
+继续free掉之前的vdata结构体
+
+
+com/taobao/wireless/security/adapter/umid/UmidAdapter这个类也没有，又遇到上面提到的问题
+// TODO 调试真app
