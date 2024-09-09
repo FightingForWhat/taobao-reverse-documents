@@ -40,7 +40,10 @@ stid45-0=umt **sdfsd-0=长wua** 至于其他几个json key的解密就不贴了
 
  
 
-app刚打开的时候只会有rt_undef_key0 发完硬件信息请求拿到M1g 才会加密写入SG_INNER_DATA内 本地的算法只能生成短wua 必须读取到sdfsd=eeid才会生成长wua
+app刚打开的时候只会有rt_undef_key0 发完硬件信息请求拿到M1g 
+才会加密写入SG_INNER_DATA内 
+本地的算法只能生成短wua 
+必须读取到sdfsd=eeid才会生成长wua
 
 ## 协议（部分）
 
@@ -103,7 +106,10 @@ jsonObject.put("3b0a",setSV("5e07","V9.8.22.0.OEBCNFA"));//incremental
 
 
 
-完整json分三个部分ct内容包含了以上硬件信息相关 我们只要对整个json数据逐一分析 用随机的硬件信息或真机库数据进行动态修改并发送请求 即可获取大量eeid **短wua算法+eeid=长wua**
+完整json分三个部分ct内容包含了以上硬件信息相关 
+我们只要对整个json数据逐一分析 
+用随机的硬件信息或真机库数据进行动态修改并发送请求 
+即可获取大量eeid **短wua算法+eeid=长wua**
 
 ## 发送请求
 
@@ -120,9 +126,13 @@ Gzip一下然后再解密返回数据
 ## 总结
 
 **真机无root xp frida生成的eeid可以用反之环境异常手机则不行**
+
 拿着eeid生成完整4签名即可不带账号获取到商品详情数据
+
 还有一些细节没有完善 以及大量请求风控之类的 我不爬淘宝数据
+
 只想研究下这种结合服务端的签名算法 也是头一次搞 很有意思
+
 改机的彻底应该也能过 就是效率低了些 对wua感兴趣的可以去研究libsgmainso.so
 
 
