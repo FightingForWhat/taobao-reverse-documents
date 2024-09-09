@@ -1,5 +1,3 @@
-> 本文由 [简悦 SimpRead](http://ksria.com/simpread/) 转码， 原文地址 [bbs.pediy.com](https://bbs.pediy.com/thread-267741.htm)
-
 > [原创]libsgmain 反混淆及 VM 还原
 
 我又来搞阿里的混淆了。网上已经有不少分析 libsgmain 的文章，不过大都是侧重流程原理或者具体算法的分析，很少有对他进行反混淆的。  
@@ -1525,8 +1523,3 @@ while ( 0x1 ) {
 }
 ```
 
-[【公告】【iPhone 13 大奖等你拿】看雪. 众安 2021 KCTF 秋季赛 防守篇 - 征题倒计时（11 月 14 日截止）！](https://bbs.pediy.com/thread-269228.htm)
-
-最后于 2021-5-24 23:29 被 krash 编辑 ，原因：
-
-[#混淆加固](forum-161-1-121.htm) [#逆向分析](forum-161-1-118.htm)
