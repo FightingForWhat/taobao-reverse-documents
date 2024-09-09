@@ -835,24 +835,3 @@ https://m.damai.cn/app/dmfe/h5-ultron-buy/index.html?buyParam=718707599799_2_500
 本文完整的记录了笔者对于 Apk 与服务器交互 API 的解析过程，包括环境搭建、抓包、trace 分析、hook、rpc 调用。本文对于淘系 Apk 的分析可以提供较多参考。本文算是笔者第一次深入且成功的用动态+静态分析结合的方式，借助神器 frida+jadx，成功破解 Apk，因此本文的记录也较为细致的记录了作者的思考过程，可以给新手提供参考。
 
 本文也有一些不足之处，如无法脱离模拟器运行、仅能单用户、抢票成功率仍不高等。对于这些问题，如果未来作者有时间，会再回来填坑。
-
-本文作者为 m2kar，原文发表在 [`https://github.com/m2kar/m2kar.github.io/issues/21`](https://github.com/m2kar/m2kar.github.io/issues/21) ，转载请注明出处。
-
-分享一个 tg 讨论组， https://t.me/+IbWm3n0o1KlkMTg1 ,感谢 @svcvit
-
-最后，欢迎大家在 issue 评论区或 tg 讨论组多多提出问题相互交流。
-
-<hr/>
-
-- 欢迎[评论](https://github.com/m2kar/m2kar.github.io/issues/21)以及发邮件和作者交流心得。
-- **版权声明**：本文为 m2kar 的原创文章，遵循 CC 4.0 BY-SA 版权协议，转载请附上原文出处链接及本声明。
-- **作者**: m2kar
-- **打赏链接**: [欢迎打赏 m2kar,您的打赏是我创作的重要源泉](http://m2kar-cn.mikecrm.com/wy97haW)
-- **邮箱**: `m2kar.cn<at>gmail.com`
-- **主页**: [m2kar.cn](https://m2kar.cn)
-- **Github**: [github.com/m2kar](https://github.com/m2kar)
-- **CSDN**: [M2kar 的专栏](https://m2kar.blog.csdn.net)
-
-<hr/>
-
-**欢迎在 ISSUE 参与本博客讨论**: [m2kar/m2kar.github.io#21](https://github.com/m2kar/m2kar.github.io/issues/21)
