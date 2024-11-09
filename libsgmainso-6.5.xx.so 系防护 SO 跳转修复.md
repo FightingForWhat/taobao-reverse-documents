@@ -1,12 +1,9 @@
-> 本文由 [简悦 SimpRead](http://ksria.com/simpread/) 转码， 原文地址 [mp.weixin.qq.com](https://mp.weixin.qq.com/s/XF-qnLwii9Xt734a2aXOWA)
 
 **观前提示：**  
 
 **本文章仅供学习交流, 切勿用于非法通途, 如有侵犯贵司请及时联系删除**
 
 ```
-样本：aHR0cHM6Ly9wYW4uYmFpZHUuY29tL3MvMWl5Q21NNVd1WC1NTkNsRkh2X0w3TVE/cHdkPWxpbm4=
-
 
 libsgmainso-6.5.xx.so
 
