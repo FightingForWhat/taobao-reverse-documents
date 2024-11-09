@@ -7,6 +7,9 @@
 ```
 样本：aHR0cHM6Ly9wYW4uYmFpZHUuY29tL3MvMWl5Q21NNVd1WC1NTkNsRkh2X0w3TVE/cHdkPWxpbm4=
 
+
+libsgmainso-6.5.xx.so
+
 ```
 
 ![](https://mmbiz.qpic.cn/mmbiz_png/Em7AaVMQYsMId94n7220HF6apIZYqhaFqGnaicm1h4xpn0ibWGM0icuGiaibAMnSFr3WlD4dFtAghO90YJJzkVmPSZA/640?wx_fmt=png)
